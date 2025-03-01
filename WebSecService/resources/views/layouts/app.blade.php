@@ -25,6 +25,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url('/prime') }}">Prime Numbers</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('users.index') }}">Users CRUD</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('grades.index') }}">Grades</a>
+                </li>
             </ul>
         </div>
     </nav>

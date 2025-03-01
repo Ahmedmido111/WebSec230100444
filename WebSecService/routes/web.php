@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\YourController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\TestController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,3 +28,8 @@ Route::get('/multable', function () {
 Route::get('/prime', function () {
     return view('prime');
 });
+
+Route::resource('users', UserController::class);
+
+// Add route for test controller
+Route::get('/test', [TestController::class, 'index']);

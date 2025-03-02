@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\YourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\GradeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,6 +31,7 @@ Route::get('/prime', function () {
 });
 
 Route::resource('users', UserController::class);
+Route::resource('grades', GradeController::class);
 
 // Add route for test controller
 Route::get('/test', [TestController::class, 'index']);

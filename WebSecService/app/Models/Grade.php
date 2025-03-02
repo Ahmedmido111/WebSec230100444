@@ -1,3 +1,4 @@
+<?php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -7,10 +8,11 @@ class Grade extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course', 'grade', 'credit_hours', 'term_id'];
+    protected $fillable = [
+        'course',
+        'grade',
+        'credit_hours',
+    ];
 
-    public function term()
-    {
-        return $this->belongsTo(Term::class);
-    }
+    public $timestamps = false; // Disable timestamps
 }

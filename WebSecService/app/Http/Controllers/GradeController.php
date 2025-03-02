@@ -1,3 +1,5 @@
+<?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Grade;
@@ -9,8 +11,10 @@ class GradeController extends Controller
     public function index()
     {
         $terms = Term::with('grades')->get();
-        $cumulative_total_credit_hours = (string) $terms->sum('total_credit_hours');
-        $cumulative_gpa = (string) $terms->avg('gpa');
+        $cumulative_total_credit_hours = $terms->sum('total_credit_hours');
+        $cumulative_gpa = $cumulative_total_credit_hours > 0 ? $terms->sum(function ($term) {
+            return $term->gpa * $term->total_credit_hours;
+        }) / $cumulative_total_credit_hours : 0;
 
         return view('grades.index', compact('terms', 'cumulative_total_credit_hours', 'cumulative_gpa'));
     }
@@ -22,7 +26,15 @@ class GradeController extends Controller
 
     public function store(Request $request)
     {
-        // ...validation and storing logic...
+        $request->validate([
+            'course' => 'required',
+            'grade' => 'required',
+            'credit_hours' => 'required|integer',
+        ]);
+
+        Grade::create($request->all());
+
+        return redirect()->route('grades.index');
     }
 
     public function edit(Grade $grade)
@@ -32,12 +44,21 @@ class GradeController extends Controller
 
     public function update(Request $request, Grade $grade)
     {
-        // ...validation and updating logic...
+        $request->validate([
+            'course' => 'required',
+            'grade' => 'required',
+            'credit_hours' => 'required|integer',
+        ]);
+
+        $grade->update($request->all());
+
+        return redirect()->route('grades.index');
     }
 
     public function destroy(Grade $grade)
     {
         $grade->delete();
+
         return redirect()->route('grades.index');
     }
 }

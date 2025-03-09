@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -57,5 +59,30 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function showProfile()
+    {
+        $user = Auth::user();
+        return view('users.profile', compact('user'));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'old_password' => 'required',
+            'new_password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        if (!Hash::check($request->old_password, $user->password)) {
+            return back()->withErrors(['old_password' => 'The provided password does not match your current password.']);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return back()->with('status', 'Password successfully updated.');
     }
 }

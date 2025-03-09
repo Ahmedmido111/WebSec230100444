@@ -28,9 +28,31 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('users.index') }}">Users CRUD</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('grades.index') }}">Grades</a>
-                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <!-- Authentication Links -->
+                @guest
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('register') }}">Register</a>
+                    </li>
+                @else
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('users.profile') }}">{{ Auth::user()->name }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('logout') }}"
+                           onclick="event.preventDefault();
+                                     document.getElementById('logout-form').submit();">
+                            Logout
+                        </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            @csrf
+                        </form>
+                    </li>
+                @endguest
             </ul>
         </div>
     </nav>

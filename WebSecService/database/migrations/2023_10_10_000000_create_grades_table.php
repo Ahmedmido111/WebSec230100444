@@ -13,11 +13,13 @@ class CreateGradesTable extends Migration
      */
     public function up()
     {
+        Schema::dropIfExists('grades'); // Drop the table if it exists
+
         Schema::create('grades', function (Blueprint $table) {
-            $table->string('course');
+            $table->string('course')->primary();
             $table->string('grade');
             $table->integer('credit_hours');
-            $table->primary(['course']); 
+            $table->timestamps();
         });
     }
 

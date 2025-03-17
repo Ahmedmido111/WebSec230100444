@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,12 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        require_once app_path('helpers.php');
-
-        if ($this->app->environment('local')) {
-            DB::listen(function ($query) {
-                Log::info($query->sql, $query->bindings, $query->time);
-            });
-        }
+        //
     }
 }

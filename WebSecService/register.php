@@ -1,3 +1,0 @@
-<?php
-// Registration logic here
-?>

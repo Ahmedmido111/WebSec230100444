@@ -1,45 +1,46 @@
-@extends('layouts.app')
-
+@extends('layouts.master')
 @section('title', 'Edit User')
-
 @section('content')
-    <div class="card m-4">
-        <div class="card-header">Edit User</div>
-        <div class="card-body">
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+<div class="d-flex justify-content-center">
+    <div class="row m-4 col-sm-8">
+        <form action="{{route('users_save', $user->id)}}" method="post">
+            {{ csrf_field() }}
+            @foreach($errors->all() as $error)
+            <div class="alert alert-danger">
+            <strong>Error!</strong> {{$error}}
+            </div>
+            @endforeach
+            <div class="row mb-2">
+                <div class="col-12">
+                    <label for="code" class="form-label">Name:</label>
+                    <input type="text" class="form-control" placeholder="Name" name="name" required value="{{$user->name}}">
                 </div>
-            @endif
+            </div>
+            @can('edit_users')
+            <div class="col-12 mb-2">
+                <label for="model" class="form-label">Roles:</label>
+                <select multiple class="form-select" name="roles[]">
+                    @foreach($roles as $role)
+                    <option value='{{$role->name}}' {{$role->taken?'selected':''}}>
+                        {{$role->name}}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 mb-2">
+                <label for="model" class="form-label">Direct Permissions:</label>
+                <select multiple class="form-select" name="permissions[]">
+                @foreach($permissions as $permission)
+                    <option value='{{$permission->name}}' {{$permission->taken?'selected':''}}>
+                        {{$permission->display_name}}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            @endcan
 
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('users.update', $user) }}">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="id" value="{{ $user->id }}">
-                <div class="form-group">
-                    <label for="name">Name</label>
-                    <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" name="password" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-warning">Update</button>
-            </form>
-        </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
     </div>
+</div>
 @endsection

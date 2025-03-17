@@ -1,14 +1,14 @@
-@extends('layouts.app')
-
-@section('title', 'Multiplication Table of 5')
-
+@extends('layouts.master')
+@section('title', 'Prime Numbers')
 @section('content')
-    <div class="card m-4 col-md-6">
-        <div class="card-header">Multiplication Table of 5</div>
-        <div class="card-body">
-            @for ($i = 1; $i <= 10; $i++)
-                <p>5 * {{ $i }} = {{ 5 * $i }}</p>
-            @endfor
-        </div>
-    </div>
+<div class="card m-4 col-sm-2">	
+  <div class="card-header">{{$j}} {{$msg}}</div>
+  <div class="card-body">
+    <table>
+      @foreach (range(1, 10) as $i)
+      <tr><td>{{$i}} * {{$j}}</td><td> = {{ $i * $j }}</td></li>    
+      @endforeach
+    </table>
+  </div>
+</div>
 @endsection

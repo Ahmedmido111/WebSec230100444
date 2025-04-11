@@ -24,6 +24,10 @@ Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->nam
 Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
 Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
 
+
+Route::get('verify', [UsersController::class, 'verify'])->name('verify');
+
+
 Route::get('/', function () {
     return view('welcome');
 });

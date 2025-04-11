@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Web;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\VerificationEmail;
+
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use DB;
 use Artisan;
+use Carbon\Carbon;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -31,7 +36,6 @@ class UsersController extends Controller {
     }
 
     public function doRegister(Request $request) {
-
     	try {
     		$this->validate($request, [
 	        'name' => ['required', 'string', 'min:5'],
@@ -40,18 +44,52 @@ class UsersController extends Controller {
 	    	]);
     	}
     	catch(\Exception $e) {
-
     		return redirect()->back()->withInput($request->input())->withErrors('Invalid registration information.');
     	}
 
-    	
-    	$user =  new User();
-	    $user->name = $request->name;
-	    $user->email = $request->email;
-	    $user->password = bcrypt($request->password); //Secure
-	    $user->save();
+    	try {
+	    	// Create the user first
+	    	$user = User::create([
+	            'name' => $request->name,
+	            'email' => $request->email,
+	            'password' => bcrypt($request->password),
+	        ]);
 
-        return redirect('/');
+	    	// Now we can use the $user variable
+	    	$title = "Verification Link";
+	        $token = Crypt::encryptString(json_encode(['id' => $user->id, 'email' => $user->email]));
+	        $link = route("verify", ['token' => $token]);
+	        
+	        // Log the email attempt with more details
+	        \Log::info('Attempting to send verification email', [
+	            'to' => $user->email,
+	            'from' => config('mail.from.address'),
+	            'host' => config('mail.mailers.smtp.host'),
+	            'port' => config('mail.mailers.smtp.port'),
+	            'encryption' => config('mail.mailers.smtp.encryption'),
+	            'username' => config('mail.mailers.smtp.username')
+	        ]);
+	        
+	        // Try to send the email with error handling
+	        try {
+	            $mail = new VerificationEmail($link, $user->name);
+	            Mail::to($user->email)->send($mail);
+	            \Log::info('Verification email sent successfully to: ' . $user->email);
+	            return redirect('/')->with('success', 'Registration successful! Please check your email for verification.');
+	        } catch (\Swift_TransportException $e) {
+	            \Log::error('Swift Transport Error: ' . $e->getMessage());
+	            \Log::error('Error details: ' . $e->getTraceAsString());
+	            return redirect()->back()->withInput($request->input())->withErrors('Could not connect to mail server. Please try again later.');
+	        } catch (\Exception $e) {
+	            \Log::error('General Email Error: ' . $e->getMessage());
+	            \Log::error('Error details: ' . $e->getTraceAsString());
+	            return redirect()->back()->withInput($request->input())->withErrors('Email could not be sent. Please try again later.');
+	        }
+    	} catch (\Exception $e) {
+    		\Log::error('Registration Error: ' . $e->getMessage());
+    		\Log::error('Error details: ' . $e->getTraceAsString());
+    		return redirect()->back()->withInput($request->input())->withErrors('Registration failed. Please try again.');
+    	}
     }
 
     public function login(Request $request) {
@@ -63,8 +101,10 @@ class UsersController extends Controller {
     	if(!Auth::attempt(['email' => $request->email, 'password' => $request->password]))
             return redirect()->back()->withInput($request->input())->withErrors('Invalid login information.');
 
-        $user = User::where('email', $request->email)->first();
-        Auth::setUser($user);
+            $user = User::where('email', $request->email)->first();
+            if(!$user->email_verified_at)
+                return redirect()->back()->withInput($request->input())
+                    ->withErrors('Your email is not verified.');
 
         return redirect('/');
     }
@@ -185,4 +225,17 @@ class UsersController extends Controller {
 
         return redirect(route('profile', ['user'=>$user->id]));
     }
+
+
+
+    public function verify(Request $request) {
+
+        $decryptedData = json_decode(Crypt::decryptString($request->token), true);
+        $user = User::find($decryptedData['id']);
+        if(!$user) abort(401);
+        $user->email_verified_at = Carbon::now();
+        $user->save();
+        return view('users.verified', compact('user'));
+       }
+       
 } 

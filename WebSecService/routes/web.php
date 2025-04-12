@@ -32,6 +32,8 @@ Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->
 Route::get('/auth/google', [UsersController::class, 'redirectToGoogle'])->name('login_with_google');
 Route::get('/auth/google/callback', [UsersController::class, 'handleGoogleCallback']);
 
+Route::get('/auth/linkedin', [UsersController::class, 'redirectToLinkedin'])->name('login_with_linkedin');
+Route::get('/auth/linkedin/callback', [UsersController::class, 'handleLinkedinCallback']);
 
 Route::get('verify', [UsersController::class, 'verify'])->name('verify');
 
@@ -57,3 +59,7 @@ Route::get('/prime', function () {
 Route::get('/test', function () {
     return view('test');
 });
+
+Route::get('/privacy-policy', function () {
+    return view('privacy-policy');
+})->name('privacy-policy');

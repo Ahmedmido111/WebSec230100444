@@ -364,4 +364,43 @@ class UsersController extends Controller {
             return redirect()->route('login')->with('error', 'Something went wrong with Google login. Please try again.');
         }
     }
+
+    public function redirectToLinkedin()
+    {
+        try {
+            return Socialite::driver('linkedin')->redirect();
+        } catch (\Exception $e) {
+            \Log::error('LinkedIn Redirect Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Failed to connect to LinkedIn. Please try again.');
+        }
+    }
+
+    public function handleLinkedinCallback()
+    {
+        try {
+            $linkedinUser = Socialite::driver('linkedin')->user();
+            
+            if (!$linkedinUser->email) {
+                return redirect()->route('login')->with('error', 'Could not retrieve email from LinkedIn.');
+            }
+            
+            $user = User::where('email', $linkedinUser->email)->first();
+            
+            if (!$user) {
+                $user = User::create([
+                    'name' => $linkedinUser->name,
+                    'email' => $linkedinUser->email,
+                    'password' => bcrypt(Str::random(24)),
+                    'email_verified_at' => now(),
+                ]);
+            }
+            
+            Auth::login($user);
+            
+            return redirect()->intended('/');
+        } catch (\Exception $e) {
+            \Log::error('LinkedIn Login Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Something went wrong with LinkedIn login. Please try again.');
+        }
+    }
 }   

@@ -10,6 +10,7 @@
         "laravel/framework": "^11.31",
         "laravel/socialite": "^5.19",
         "laravel/tinker": "^2.9",
+        "league/oauth2-linkedin": "^5.1",
         "spatie/laravel-permission": "6.4"
     },
     "require-dev": {

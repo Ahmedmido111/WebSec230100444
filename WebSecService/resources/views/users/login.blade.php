@@ -28,7 +28,8 @@
         <a href="{{ route('forgot_password') }}" class="text-decoration-none">Forgot Password?</a>
       </div>
       <div class="form-group mb-2">
-        <a href="{{ route('login_with_google') }}" class="btn btn-danger">Login with Google</a>
+        <a href="{{ route('login_with_google') }}" class="btn btn-danger mb-2">Login with Google</a>
+        <a href="{{ route('login_with_linkedin') }}" class="btn btn-primary">Login with LinkedIn</a>
       </div>
     </form>
     </div>

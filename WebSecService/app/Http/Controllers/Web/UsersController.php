@@ -16,6 +16,7 @@ use Spatie\Permission\Models\Permission;
 use DB;
 use Artisan;
 use Carbon\Carbon;
+use Laravel\Socialite\Facades\Socialite;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -331,5 +332,36 @@ class UsersController extends Controller {
         } catch (\Exception $e) {
             return redirect()->back()->withInput($request->input())->withErrors('Failed to reset password. Please try again.');
         }
+
     }
-} 
+
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+            
+            $user = User::where('email', $googleUser->email)->first();
+            
+            if (!$user) {
+                $user = User::create([
+                    'name' => $googleUser->name,
+                    'email' => $googleUser->email,
+                    'password' => bcrypt(Str::random(24)),
+                    'email_verified_at' => now(),
+                ]);
+            }
+            
+            Auth::login($user);
+            
+            return redirect()->intended('/');
+        } catch (\Exception $e) {
+            \Log::error('Google Login Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Something went wrong with Google login. Please try again.');
+        }
+    }
+}   

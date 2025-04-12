@@ -10,6 +10,8 @@ Route::get('login', [UsersController::class, 'login'])->name('login');
 Route::post('login', [UsersController::class, 'doLogin'])->name('do_login');
 Route::get('forgot-password', [UsersController::class, 'forgotPassword'])->name('forgot_password');
 Route::post('forgot-password', [UsersController::class, 'sendResetPassword'])->name('send_reset_password');
+Route::get('reset-password/{token}', [UsersController::class, 'showResetPassword'])->name('reset_password');
+Route::post('reset-password', [UsersController::class, 'updatePassword'])->name('update_password');
 Route::get('logout', [UsersController::class, 'doLogout'])->name('do_logout');
 Route::get('users', [UsersController::class, 'list'])->name('users');
 Route::get('profile/{user?}', [UsersController::class, 'profile'])->name('profile');

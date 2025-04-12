@@ -258,23 +258,78 @@ class UsersController extends Controller {
 
         try {
             $user = User::where('email', $request->email)->first();
-            $temporary_password = Str::random(12); // Generate a random password
             
-            // Update user's password
-            $user->password = bcrypt($temporary_password);
-            $user->save();
+            // Generate token
+            $token = Str::random(64);
+            
+            // Store token in database
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                [
+                    'token' => $token,
+                    'created_at' => Carbon::now()
+                ]
+            );
 
-            // Set session variable to indicate temporary password
-            session(['using_temporary_password' => true]);
+            // Create reset link
+            $resetLink = route('reset_password', ['token' => $token]);
 
-            // Send email with temporary password
-            $mail = new ResetPasswordEmail($temporary_password, $user->name);
+            // Send email with reset link
+            $mail = new ResetPasswordEmail($resetLink, $user->name);
             Mail::to($user->email)->send($mail);
 
-            return redirect()->back()->with('success', 'A temporary password has been sent to your email address.');
+            return redirect()->back()->with('success', 'Password reset link has been sent to your email address.');
         } catch (\Exception $e) {
             \Log::error('Password Reset Error: ' . $e->getMessage());
             return redirect()->back()->withInput($request->input())->withErrors('Failed to send reset password email. Please try again later.');
+        }
+    }
+
+    public function showResetPassword(Request $request, $token) {
+        $resetToken = DB::table('password_reset_tokens')
+            ->where('token', $token)
+            ->where('created_at', '>', Carbon::now()->subMinutes(60))
+            ->first();
+
+        if (!$resetToken) {
+            return redirect()->route('login')->withErrors('Invalid or expired password reset link.');
+        }
+
+        return view('users.reset_password', [
+            'token' => $token,
+            'email' => $resetToken->email
+        ]);
+    }
+
+    public function updatePassword(Request $request) {
+        try {
+            $this->validate($request, [
+                'token' => 'required',
+                'email' => 'required|email',
+                'password' => ['required', 'confirmed', Password::min(8)->numbers()->letters()->mixedCase()->symbols()],
+            ]);
+
+            $resetToken = DB::table('password_reset_tokens')
+                ->where('email', $request->email)
+                ->where('token', $request->token)
+                ->where('created_at', '>', Carbon::now()->subMinutes(60))
+                ->first();
+
+            if (!$resetToken) {
+                return redirect()->route('login')->withErrors('Invalid or expired password reset link.');
+            }
+
+            // Update password
+            $user = User::where('email', $request->email)->first();
+            $user->password = bcrypt($request->password);
+            $user->save();
+
+            // Delete the token
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+            return redirect()->route('login')->with('success', 'Your password has been reset successfully. Please login with your new password.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput($request->input())->withErrors('Failed to reset password. Please try again.');
         }
     }
 } 

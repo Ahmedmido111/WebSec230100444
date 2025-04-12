@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerificationEmail;
+use App\Mail\ResetPasswordEmail;
+use Illuminate\Support\Str;
 
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
@@ -97,14 +99,19 @@ class UsersController extends Controller {
     }
 
     public function doLogin(Request $request) {
-    	
-    	if(!Auth::attempt(['email' => $request->email, 'password' => $request->password]))
+        if(!Auth::attempt(['email' => $request->email, 'password' => $request->password]))
             return redirect()->back()->withInput($request->input())->withErrors('Invalid login information.');
 
-            $user = User::where('email', $request->email)->first();
-            if(!$user->email_verified_at)
-                return redirect()->back()->withInput($request->input())
-                    ->withErrors('Your email is not verified.');
+        $user = User::where('email', $request->email)->first();
+        if(!$user->email_verified_at)
+            return redirect()->back()->withInput($request->input())
+                ->withErrors('Your email is not verified.');
+
+        // Check if the user is using a temporary password
+        if (session('using_temporary_password')) {
+            session()->forget('using_temporary_password'); // Clear the session variable
+            return redirect()->route('edit_password');
+        }
 
         return redirect('/');
     }
@@ -226,8 +233,6 @@ class UsersController extends Controller {
         return redirect(route('profile', ['user'=>$user->id]));
     }
 
-
-
     public function verify(Request $request) {
 
         $decryptedData = json_decode(Crypt::decryptString($request->token), true);
@@ -237,5 +242,39 @@ class UsersController extends Controller {
         $user->save();
         return view('users.verified', compact('user'));
        }
-       
+
+    public function forgotPassword(Request $request) {
+        return view('users.forgot_password');
+    }
+
+    public function sendResetPassword(Request $request) {
+        try {
+            $this->validate($request, [
+                'email' => ['required', 'email', 'exists:users,email'],
+            ]);
+        } catch(\Exception $e) {
+            return redirect()->back()->withInput($request->input())->withErrors('Invalid email address.');
+        }
+
+        try {
+            $user = User::where('email', $request->email)->first();
+            $temporary_password = Str::random(12); // Generate a random password
+            
+            // Update user's password
+            $user->password = bcrypt($temporary_password);
+            $user->save();
+
+            // Set session variable to indicate temporary password
+            session(['using_temporary_password' => true]);
+
+            // Send email with temporary password
+            $mail = new ResetPasswordEmail($temporary_password, $user->name);
+            Mail::to($user->email)->send($mail);
+
+            return redirect()->back()->with('success', 'A temporary password has been sent to your email address.');
+        } catch (\Exception $e) {
+            \Log::error('Password Reset Error: ' . $e->getMessage());
+            return redirect()->back()->withInput($request->input())->withErrors('Failed to send reset password email. Please try again later.');
+        }
+    }
 } 

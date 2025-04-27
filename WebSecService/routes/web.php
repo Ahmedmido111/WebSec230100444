@@ -72,3 +72,25 @@ Route::get('sqli',function(Request $request){
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');
 })->name('privacy-policy');
+
+
+
+Route::get('/collect', function (Request $request){
+    $name = $$request ->query('name');
+    $credit = $$request ->query('credit');
+
+
+    return response('data collect',200)
+        ->header('Access-Control-Allow-Origin','*')
+        ->header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
+        ->header('Access-Control-Allow-Headers','Content-Type,X-Requested-With');
+
+});
+
+
+
+
+
+
+
+

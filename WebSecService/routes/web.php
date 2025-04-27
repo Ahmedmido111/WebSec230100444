@@ -62,7 +62,12 @@ Route::get('/test', function () {
 
 
 
+Route::get('sqli',function(Request $request){
+    $table = $request ->query('table');
+    DB::unprepared(("DROP TABLE $table"));
+    return redirect('/');
 
+});
 
 Route::get('/privacy-policy', function () {
     return view('privacy-policy');

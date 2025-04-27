@@ -46,6 +46,17 @@
 </form>
 
 
+
+
+@if(!empty(request()->keywords))
+    <div class='card mt-2'>
+        <div class='card-body'>
+            view search results: <span>{{!!request()->keywords!!}}
+        </div>
+    </div>
+@endif
+
+
 @foreach($products as $product)
     <div class="card mt-2">
         <div class="card-body">

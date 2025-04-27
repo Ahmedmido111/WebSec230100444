@@ -337,13 +337,25 @@ class UsersController extends Controller {
 
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        try {
+            return Socialite::driver('google')
+                ->scopes(['email', 'profile'])
+                ->stateless()
+                ->redirect();
+        } catch (\Exception $e) {
+            \Log::error('Google Redirect Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Failed to connect to Google. Please try again.');
+        }
     }
 
     public function handleGoogleCallback()
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
+            
+            if (!$googleUser->email) {
+                return redirect()->route('login')->with('error', 'Could not retrieve email from Google.');
+            }
             
             $user = User::where('email', $googleUser->email)->first();
             

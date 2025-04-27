@@ -11,6 +11,13 @@
         @endcan
     </div>
 </div>
+<div class="card my-2">
+    <div class="card-body">
+        Dear <span id='name'>{{ auth()->user()->name }}</span>, your credit is <span 
+id='credit'>{{ auth()->user()->credit }}</span>
+    </div>
+ </div>
+
 <form>
     <div class="row">
         <div class="col col-sm-2">

@@ -3,6 +3,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\ProductsController;
 use App\Http\Controllers\Web\UsersController;
+use App\Models\User;
 
 Route::get('register', [UsersController::class, 'register'])->name('register');
 Route::post('register', [UsersController::class, 'doRegister'])->name('do_register');
@@ -39,8 +40,14 @@ Route::get('verify', [UsersController::class, 'verify'])->name('verify');
 
 
 Route::get('/', function () {
+
+    $email = emailFromLoginCertificate();
+    if($email && !auth()->user()) {
+        $user = User::where('email', $email)->first();
+        if($user) Auth::login($user);
+    }
     return view('welcome');
-});
+   });
 
 Route::get('/multable', function (Request $request) {
     $j = $request->number??5;

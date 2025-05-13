@@ -94,6 +94,92 @@ Route::get('/collect', function (Request $request){
 
 });
 
+Route::get('/cryptography', function (Request $request) {
+    $data = $request->data ?? "Welcome to Cryptography";
+    $action = $request->action ?? "Encrypt";
+    $result = "";
+    $status = "Failed";
+
+    if ($action == "Encrypt") {
+        $temp = openssl_encrypt($data, 'aes-128-ecb', 'thisisasecretkey', OPENSSL_RAW_DATA, '');
+        if ($temp) {
+            $status = 'Encrypted Successfully';
+            $result = base64_encode($temp);
+        }
+    } elseif ($action == "Decrypt") {
+        $temp = base64_decode($data);
+        $result = openssl_decrypt($temp, 'aes-128-ecb', 'thisisasecretkey', OPENSSL_RAW_DATA, '');
+        if ($result) {
+            $status = 'Decrypted Successfully';
+        }
+    } elseif ($action == "Hash") {
+        $temp = hash('sha256', $request->data);
+        $result = base64_encode($temp);
+        $status = 'Hashed Successfully';
+    } elseif ($action == "Sign") {
+        $path = storage_path('app/private/useremail@domain.com.pfx');
+        $password = '123456789';
+        $certificates = [];
+        $pfx = file_get_contents($path);
+        openssl_pkcs12_read($pfx, $certificates, $password);
+        $privateKey = $certificates['pkey'];
+        $signature = '';
+        if (openssl_sign($request->data, $signature, $privateKey, 'sha256')) {
+            $result = base64_encode($signature);
+            $status = 'Signed Successfully';
+        }
+    } elseif ($action == "Verify") {
+    $signature = base64_decode($request->result);
+    $path = storage_path('app/public/useremail@domain.com.crt');
+
+    if (!file_exists($path)) {
+        $status = 'Public certificate not found.';
+    } else {
+        $publicKey = file_get_contents($path);
+        if (!$publicKey) {
+            $status = 'Failed to read public key.';
+        } elseif (openssl_verify($request->data, $signature, $publicKey, OPENSSL_ALGO_SHA256)) {
+            $status = 'Verified Successfully';
+        } else {
+            $status = 'Verification Failed.';
+        }
+    }
+    } elseif ($action == "KeySend") {
+        $path = storage_path('app/public/useremail@domain.com.crt');
+        $publicKey = file_get_contents($path);
+        $temp = '';
+        if (openssl_public_encrypt($request->data, $temp, $publicKey)) {
+            $result = base64_encode($temp);
+            $status = 'Key is Encrypted Successfully';
+        }
+    } elseif ($action == "KeyRecive") {
+    $path = storage_path('app/private/useremail@domain.com.pfx');
+    $password = '12345678';
+
+    if (!file_exists($path)) {
+        $status = 'PFX file not found.';
+    } else {
+        $certificates = [];
+        $pfx = file_get_contents($path);
+
+        if (!openssl_pkcs12_read($pfx, $certificates, $password)) {
+            $status = 'Failed to read PFX. Check password.';
+        } else {
+            $privateKey = $certificates['pkey'];
+            $encryptedKey = base64_decode($request->data);
+            $result = '';
+
+            if (openssl_private_decrypt($encryptedKey, $result, $privateKey)) {
+                $status = 'Key is Decrypted Successfully';
+            } else {
+                $status = 'Key Decryption Failed';
+            }
+        }
+    }
+}
+
+    return view('cryptography', compact('data', 'result', 'action', 'status'));
+})->name('cryptography');
 
 
 
